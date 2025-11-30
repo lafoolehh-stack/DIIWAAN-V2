@@ -19,6 +19,10 @@ const App: React.FC = () => {
     const [profiles, setProfiles] = useState<Profile[]>(PROFILES);
     const [isAdmin, setIsAdmin] = useState(false); // Default to false (hidden admin)
     const [articleModal, setArticleModal] = useState<{ isOpen: boolean; title: string; category: string } | null>(null);
+    
+    // Login Modal State
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
 
     // Update HTML dir attribute for RTL support
     useEffect(() => {
@@ -117,22 +121,26 @@ const App: React.FC = () => {
     };
 
     const checkLogin = () => {
-        const t = TRANSLATIONS[lang];
         if (isAdmin) {
-             const confirmLogout = confirm(t.logout + "?");
-             if(confirmLogout) {
+             const t = TRANSLATIONS[lang];
+             if(window.confirm(t.logout + "?")) {
                  setIsAdmin(false);
-                 alert(t.adminLogout);
              }
-             return;
+        } else {
+            // Open the custom login modal instead of window.prompt
+            setShowLoginModal(true);
+            setPasswordInput('');
         }
+    };
 
-        const password = prompt("Enter Admin Password:");
-        if(password === "admin") {
+    const handleLoginSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if(passwordInput === 'admin') {
             setIsAdmin(true);
-            alert(t.adminAccess);
-        } else if (password) {
-            alert("Incorrect Password");
+            setShowLoginModal(false);
+            setPasswordInput('');
+        } else {
+            alert("Incorrect Password / Lambarka sirta ah waa khalad");
         }
     };
 
@@ -220,13 +228,47 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            {/* Hidden Admin Button - Fixed Bottom Right */}
+            {/* Admin Login Modal */}
+            {showLoginModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowLoginModal(false)}>
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm mx-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-navy">Admin Access</h3>
+                            <button onClick={() => setShowLoginModal(false)} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200 text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleLoginSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input 
+                                    type="password" 
+                                    value={passwordInput}
+                                    onChange={(e) => setPasswordInput(e.target.value)}
+                                    placeholder="Enter admin password"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:outline-none transition-all"
+                                    autoFocus
+                                />
+                            </div>
+                            <button 
+                                type="submit"
+                                className="w-full bg-navy text-white font-bold py-3 rounded-xl hover:bg-primary transition-colors shadow-lg flex items-center justify-center gap-2"
+                            >
+                                <Unlock className="w-4 h-4" />
+                                {TRANSLATIONS[lang].login}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Floating Admin Button - Fixed Bottom Right */}
             <button 
                 onClick={checkLogin}
-                className={`fixed bottom-4 right-4 p-3 rounded-full bg-navy text-white shadow-lg transition-all duration-300 z-50 ${isAdmin ? 'opacity-100' : 'opacity-10 hover:opacity-100'}`}
-                title="Admin Access"
+                className={`fixed bottom-5 right-5 p-3.5 rounded-full bg-navy text-white shadow-2xl shadow-navy/30 transition-all duration-300 z-[60] cursor-pointer hover:scale-110 active:scale-95 ${isAdmin ? 'opacity-100 ring-2 ring-green-400' : 'opacity-60 hover:opacity-100'}`}
+                title={isAdmin ? "Logout Admin" : "Login Admin"}
             >
-                {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                {isAdmin ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
             </button>
         </div>
     );
